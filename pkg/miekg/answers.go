@@ -541,6 +541,7 @@ func makeEDNSAnswer(cAns *dns.OPT) EDNSAnswer {
 	return optRes
 }
 
+// TODO 使用具体的类型
 func ParseAnswer(ans dns.RR) interface{} {
 	switch cAns := ans.(type) {
 	// Prioritize common types in expected order

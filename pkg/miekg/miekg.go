@@ -16,6 +16,7 @@ package miekg
 
 import (
 	"errors"
+	"github.com/samber/lo"
 	"net"
 	"regexp"
 	"strings"
@@ -184,6 +185,7 @@ type RoutineLookupFactory struct {
 	Timeout              time.Duration
 	IterativeTimeout     time.Duration
 	IterativeResolution  bool
+	FollowCName          bool
 	LookupAllNameServers bool
 	Trace                bool
 	DNSType              uint16
@@ -238,6 +240,8 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 	s.Retries = c.Retries
 	s.MaxDepth = c.MaxDepth
 	s.IterativeResolution = c.IterativeResolution
+	// TODO 后续参数该字段
+	s.FollowCName = true
 	s.LookupAllNameServers = c.LookupAllNameServers
 	if c.ResultVerbosity == "trace" {
 		s.Trace = true
@@ -249,9 +253,11 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 	s.Dnssec = c.Dnssec
 
 	if c.ClientSubnet != nil {
+		log.Info("启用client subnet")
 		s.EdnsOptions = append(s.EdnsOptions, c.ClientSubnet)
 	}
 	if c.NSID != nil {
+		log.Info("启用client nsid")
 		s.EdnsOptions = append(s.EdnsOptions, c.NSID)
 	}
 }
@@ -457,6 +463,8 @@ func (s *Lookup) retryingLookup(q Question, nameServer string, recursive bool) (
 			s.Factory.TCPClient.Timeout = 2 * s.Factory.TCPClient.Timeout
 		}
 	}
+
+	// TODO 不确定有没有错误
 	panic("loop must return")
 }
 
@@ -523,6 +531,7 @@ func (s *Lookup) cachedRetryingLookup(q Question, nameServer, layer string, dept
 
 	// Alright, we're not sure what to do, go to the wire.
 	s.VerboseLog(depth+2, "Wire lookup for name: ", q.Name, " (", q.Type, ") at nameserver: ", nameServer)
+	// 具体发送请求的位置
 	result, status, try, err := s.retryingLookup(q, nameServer, false)
 
 	s.Factory.Factory.IterativeCache.CacheUpdate(layer, result, depth+2, s.Factory.ThreadID)
@@ -747,8 +756,58 @@ func (s *Lookup) DoMiekgLookup(q Question, nameServer string) (interface{}, zdns
 	}
 	if s.Factory.IterativeResolution {
 		s.VerboseLog(0, "MIEKG-IN: iterative lookup for ", q.Name, " (", q.Type, ")")
-		s.IterativeStop = time.Now().Add(time.Duration(s.Factory.IterativeTimeout))
-		result, trace, status, err := s.iterativeLookup(q, nameServer, 1, ".", make([]interface{}, 0))
+		s.IterativeStop = time.Now().Add(s.Factory.IterativeTimeout)
+
+		var (
+			result Result
+			trace  []any
+			status zdns.Status
+			err    error
+		)
+		switch {
+		case q.Type == dns.TypeA && s.Factory.FollowCName:
+			var searchedCnames []string
+			for {
+				var (
+					cname string
+					a     []string
+				)
+
+				result, trace, status, err = s.iterativeLookup(q, nameServer, 1, ".", make([]interface{}, 0))
+				for _, item := range result.Answers {
+					answer, ok := item.(Answer)
+					if !ok {
+						continue
+					}
+					switch answer.Type {
+					case dns.Type(dns.TypeA).String():
+						a = append(a, answer.Answer)
+					case dns.Type(dns.TypeCNAME).String():
+						if cname != "" {
+							continue
+						}
+
+						cname = answer.Answer
+					}
+				}
+
+				if len(a) == 0 && cname != "" {
+					s.VerboseLog(0, "MIEKG-IN: FOLLOW lookup for ", cname, "from", q.Name)
+					q.Name = strings.TrimSuffix(cname, `.`)
+					if lo.Contains(searchedCnames, cname) {
+						return result, trace, zdns.STATUS_ERROR, errors.New("Cname is cycled")
+					}
+
+					searchedCnames = append(searchedCnames, cname)
+					continue
+				}
+
+				break
+			}
+		default:
+			result, trace, status, err = s.iterativeLookup(q, nameServer, 1, ".", make([]interface{}, 0))
+		}
+
 		s.VerboseLog(0, "MIEKG-OUT: iterative lookup for ", q.Name, " (", q.Type, "): status: ", status, " , err: ", err)
 		if s.Factory.Trace {
 			return result, trace, status, err

@@ -129,6 +129,7 @@ func (s *Cache) GetCachedResult(q Question, isAuthCheck bool, depth int, threadI
 	s.IterativeCache.Unlock(q)
 	// Don't return an empty response.
 	if len(retv.Answers) == 0 && len(retv.Authorities) == 0 && len(retv.Additional) == 0 {
+		// TODO 这里可以考虑把缓存清理掉
 		s.VerboseGlobalLog(depth+2, threadID, "-> no entry found in cache, after expiration")
 		var emptyRetv Result
 		return emptyRetv, false

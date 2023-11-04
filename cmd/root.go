@@ -55,9 +55,13 @@ ZDNS also includes its own recursive resolution and a cache to further optimize 
 	Run: func(cmd *cobra.Command, args []string) {
 		GC.Module = strings.ToUpper(args[0])
 		zdns.Run(GC, cmd.Flags(),
+			// 15, 4
 			&Timeout, &IterationTimeout,
+			// INET, ""
 			&Class_string, &Servers_string,
+			// /etc/resolv.conf, ""
 			&Config_file, &Localaddr_string,
+			// "", false, "", false
 			&Localif_string, &NanoSeconds, &ClientSubnet_string, &NSID)
 	},
 }

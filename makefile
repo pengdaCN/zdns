@@ -1,7 +1,7 @@
 all: zdns
 
 zdns:
-	go build
+	CGO_ENABLED="0" go build -trimpath
 
 clean:
 	rm -f zdns
