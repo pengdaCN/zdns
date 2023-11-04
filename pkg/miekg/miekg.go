@@ -240,8 +240,7 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 	s.Retries = c.Retries
 	s.MaxDepth = c.MaxDepth
 	s.IterativeResolution = c.IterativeResolution
-	// TODO 后续参数该字段
-	s.FollowCName = true
+	s.FollowCName = c.FollowCName
 	s.LookupAllNameServers = c.LookupAllNameServers
 	if c.ResultVerbosity == "trace" {
 		s.Trace = true
