@@ -110,7 +110,7 @@ func (s *Lookup) VerboseLog(depth int, args ...interface{}) {
 
 type GlobalLookupFactory struct {
 	zdns.BaseGlobalLookupFactory
-	IterativeCache Cache
+	IterativeCache *Cache
 	DNSType        uint16
 	DNSClass       uint16
 	BlacklistPath  string
@@ -154,7 +154,12 @@ func (s *GlobalLookupFactory) Initialize(c *zdns.GlobalConf) error {
 	if err != nil {
 		return err
 	}
-	s.IterativeCache.Init(c.CacheSize)
+
+	if s.IterativeCache == nil {
+		s.IterativeCache = new(Cache)
+		s.IterativeCache.Init(c.CacheSize)
+	}
+
 	s.DNSClass = dns.ClassINET
 	return nil
 }
@@ -252,11 +257,9 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 	s.Dnssec = c.Dnssec
 
 	if c.ClientSubnet != nil {
-		log.Info("启用client subnet")
 		s.EdnsOptions = append(s.EdnsOptions, c.ClientSubnet)
 	}
 	if c.NSID != nil {
-		log.Info("启用client nsid")
 		s.EdnsOptions = append(s.EdnsOptions, c.NSID)
 	}
 }
