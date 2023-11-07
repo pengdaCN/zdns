@@ -250,8 +250,8 @@ type TALINKAnswer struct {
 type URIAnswer struct {
 	Answer
 	Priority uint16 `json:"previous_name" groups:"short,normal,long,trace"`
-	Weight   uint16 `json:"previous_name" groups:"short,normal,long,trace"`
-	Target   string `json:"previous_name" groups:"short,normal,long,trace"`
+	Weight   uint16 `json:"weight" groups:"short,normal,long,trace"`
+	Target   string `json:"target" groups:"short,normal,long,trace"`
 }
 
 // copy-paste from zmap/dns/types.go >>>>>

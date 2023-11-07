@@ -2,15 +2,16 @@ package puredns
 
 import (
 	"context"
+	"log/slog"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/samber/lo"
 	"github.com/zmap/dns"
 	"github.com/zmap/zdns/pkg/miekg"
 	"github.com/zmap/zdns/pkg/zdns"
 	"golang.org/x/sync/semaphore"
-	"log/slog"
-	"net"
-	"sync"
-	"time"
 )
 
 type udpConnPool struct {

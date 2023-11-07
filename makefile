@@ -11,3 +11,9 @@ install: zdns
 
 .PHONY: zdns clean
 
+fmt:
+	goimports -l -w .
+	gofmt -s -w .
+
+lint: fmt
+	go vet ./...

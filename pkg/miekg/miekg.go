@@ -16,12 +16,13 @@ package miekg
 
 import (
 	"errors"
-	"github.com/samber/lo"
 	"net"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/samber/lo"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -224,7 +225,7 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 		}
 		if c.RecycleSockets {
 			// create PacketConn for use throughout thread's life
-			conn, err := net.ListenUDP("udp", &net.UDPAddr{s.LocalAddr, 0, ""})
+			conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: s.LocalAddr})
 			if err != nil {
 				log.Fatal("unable to create socket", err)
 			}

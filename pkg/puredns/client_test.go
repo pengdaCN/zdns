@@ -2,13 +2,14 @@ package puredns
 
 import (
 	"context"
-	"github.com/samber/lo"
-	"github.com/zmap/dns"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/samber/lo"
+	"github.com/zmap/dns"
 )
 
 func TestClient_Lookups(t *testing.T) {

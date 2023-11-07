@@ -1,8 +1,9 @@
 package puredns
 
 import (
-	"github.com/zmap/dns"
 	"testing"
+
+	"github.com/zmap/dns"
 )
 
 func TestLookup(t *testing.T) {

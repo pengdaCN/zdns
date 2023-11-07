@@ -15,10 +15,11 @@
 package dmarc
 
 import (
+	"regexp"
+
 	"github.com/zmap/dns"
 	"github.com/zmap/zdns/pkg/miekg"
 	"github.com/zmap/zdns/pkg/zdns"
-	"regexp"
 )
 
 const dmarcPrefixRegexp = "^[vV][\x09\x20]*=[\x09\x20]*DMARC1[\x09\x20]*;[\x09\x20]*"
@@ -29,7 +30,6 @@ type Result struct {
 }
 
 // Per Connection Lookup ======================================================
-//
 type Lookup struct {
 	Factory *RoutineLookupFactory
 	miekg.Lookup
@@ -43,7 +43,6 @@ func (s *Lookup) DoLookup(name string, nameServer string) (interface{}, zdns.Tra
 }
 
 // Per GoRoutine Factory ======================================================
-//
 type RoutineLookupFactory struct {
 	miekg.RoutineLookupFactory
 	Factory *GlobalLookupFactory
@@ -61,7 +60,6 @@ func (rlf *RoutineLookupFactory) InitPrefixRegexp() {
 }
 
 // Global Factory =============================================================
-//
 type GlobalLookupFactory struct {
 	miekg.GlobalLookupFactory
 }
@@ -77,7 +75,6 @@ func (glf *GlobalLookupFactory) MakeRoutineFactory(threadID int) (zdns.RoutineLo
 }
 
 // Global Registration ========================================================
-//
 func init() {
 	s := new(GlobalLookupFactory)
 	zdns.RegisterLookup("DMARC", s)
