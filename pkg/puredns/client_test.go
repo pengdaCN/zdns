@@ -28,16 +28,14 @@ func TestClient_Lookups(t *testing.T) {
 		return item != ""
 	})
 
-	for i := 0; i < 3; i++ {
-		rrs := client.Lookups(context.Background(), dns.Type(dns.TypeA), domains)
-		t.Log("domains", len(domains))
-		t.Log("rrs", len(rrs))
-	}
+	rrs := client.Lookups(context.Background(), dns.Type(dns.TypeCNAME), domains)
+	t.Log("domains", len(domains))
+	t.Log("rrs", len(rrs))
 
-	//for _, rr := range rrs {
-	//	t.Log("name =>", rr.Name)
-	//	t.Log("value =>", strings.Join(lo.Map(rr.Answer, func(item RR, index int) string {
-	//		return item.Value
-	//	}), " "))
-	//}
+	for _, rr := range rrs {
+		t.Log("name =>", rr.Name)
+		t.Log("value =>", strings.Join(lo.Map(rr.Answer, func(item RR, index int) string {
+			return item.Value
+		}), " "))
+	}
 }
