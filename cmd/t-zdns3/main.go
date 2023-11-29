@@ -3,16 +3,17 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"github.com/samber/lo"
-	"github.com/zmap/dns"
-	"github.com/zmap/zdns/pkg/miekg"
-	_ "github.com/zmap/zdns/pkg/miekg"
-	"github.com/zmap/zdns/pkg/zdns"
 	"log/slog"
 	"os"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
+	"github.com/zmap/dns"
+	"github.com/zmap/zdns/pkg/miekg"
+	_ "github.com/zmap/zdns/pkg/miekg"
+	"github.com/zmap/zdns/pkg/zdns"
 )
 
 func main() {

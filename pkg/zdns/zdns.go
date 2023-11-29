@@ -15,7 +15,6 @@
 package zdns
 
 import (
-	"log/slog"
 	"net"
 	"os"
 	"runtime"
@@ -344,7 +343,7 @@ func Run2(gc GlobalConf, in <-chan string, out chan<- any) {
 	//	// otherwise, use the set of 13 root name servers
 	//	if gc.IterativeResolution {
 	gc.NameServers = RootServers[:]
-	slog.Info("使用RootServers")
+	//slog.Info("使用RootServers")
 	//	} else {
 	//		ns, err := GetDNSServers(*config_file)
 	//		if err != nil {
@@ -449,17 +448,17 @@ func Run2(gc GlobalConf, in <-chan string, out chan<- any) {
 	//}
 	//if !gc.LocalAddrSpecified {
 	// Find local address for use in unbound UDP sockets
-	if conn, err := net.Dial("udp", "8.8.8.8:53"); err != nil {
-		log.Fatal("Unable to find default IP address: ", err)
-	} else {
-		gc.LocalAddrs = append(gc.LocalAddrs, conn.LocalAddr().(*net.UDPAddr).IP)
-		err := conn.Close()
-		if err != nil {
-			log.Warn("Unable to close test connection to Google Public DNS: ", err)
-		}
-
-		slog.Info("使用手动请求构建本地地址")
-	}
+	//if conn, err := net.Dial("udp", "8.8.8.8:53"); err != nil {
+	//	log.Fatal("Unable to find default IP address: ", err)
+	//} else {
+	//	gc.LocalAddrs = append(gc.LocalAddrs, conn.LocalAddr().(*net.UDPAddr).IP)
+	//	err := conn.Close()
+	//	if err != nil {
+	//		log.Warn("Unable to close test connection to Google Public DNS: ", err)
+	//	}
+	//
+	//	slog.Info("使用手动请求构建本地地址")
+	//}
 	//}
 	//if *nanoSeconds {
 	//	gc.TimeFormat = time.RFC3339Nano

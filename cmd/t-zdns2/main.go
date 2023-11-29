@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/zmap/dns"
-	"github.com/zmap/zdns/pkg/miekg"
-	"github.com/zmap/zdns/pkg/zdns"
-	"golang.org/x/sync/semaphore"
 	"log/slog"
 	"net"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/zmap/dns"
+	"github.com/zmap/zdns/pkg/miekg"
+	"github.com/zmap/zdns/pkg/zdns"
+	"golang.org/x/sync/semaphore"
 )
 
 func main() {

@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/samber/lo"
-	"github.com/zmap/dns"
-	"github.com/zmap/zdns/pkg/puredns"
 	"log/slog"
 	"os"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
+	"github.com/zmap/dns"
+	"github.com/zmap/zdns/pkg/puredns"
 )
 
 func main() {

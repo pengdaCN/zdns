@@ -2,13 +2,15 @@ package puredns
 
 import (
 	"context"
+	"log/slog"
+	"net"
+	"reflect"
+	"time"
+
 	"github.com/samber/lo"
 	"github.com/zmap/dns"
 	"github.com/zmap/zdns/pkg/miekg"
 	"github.com/zmap/zdns/pkg/zdns"
-	"log/slog"
-	"reflect"
-	"time"
 )
 
 type ZClient struct {
@@ -16,7 +18,7 @@ type ZClient struct {
 	logger *slog.Logger
 }
 
-func NewZClient(logger *slog.Logger, timeout time.Duration, iterationTimeout time.Duration, parallelSize int) *ZClient {
+func NewZClient(logger *slog.Logger, timeout time.Duration, iterationTimeout time.Duration, parallelSize int) (*ZClient, error) {
 	gc := zdns.GlobalConf{
 		FollowCName:         true,
 		IterativeResolution: true,
@@ -31,10 +33,17 @@ func NewZClient(logger *slog.Logger, timeout time.Duration, iterationTimeout tim
 		Threads:             parallelSize,
 	}
 
+	conn, err := net.Dial("udp", "8.8.8.8:53")
+	if err != nil {
+		return nil, err
+	}
+	gc.LocalAddrs = append(gc.LocalAddrs, conn.LocalAddr().(*net.UDPAddr).IP)
+	_ = conn.Close()
+
 	return &ZClient{
 		gc:     gc,
 		logger: logger,
-	}
+	}, nil
 }
 
 func (c *ZClient) getLockupLogger(ctx context.Context) *slog.Logger {
@@ -64,6 +73,8 @@ func (c *ZClient) Lookups(ctx context.Context, resolveTy dns.Type, arr []string)
 
 	execGc := c.gc
 	execGc.Module = resolveTy.String()
+
+	go zdns.Run2(execGc, in, out)
 
 	var rr []LookupResult
 	var logger = c.getLockupLogger(ctx)

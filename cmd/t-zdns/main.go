@@ -1,12 +1,13 @@
 package main
 
 import (
+	"os"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/zmap/dns"
 	_ "github.com/zmap/zdns/pkg/miekg"
 	"github.com/zmap/zdns/pkg/zdns"
-	"os"
-	"time"
 )
 
 func main() {

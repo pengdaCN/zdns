@@ -17,7 +17,6 @@ package zdns
 import (
 	"encoding/csv"
 	"encoding/json"
-	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -323,8 +322,8 @@ func DoLookups2(g GlobalLookupFactory, c *GlobalConf, inChan <-chan string, outC
 	//	- process until inChan closes, then wg.done()
 	// Once we processing threads have all finished, wait until the
 	// output and metadata threads have completed
-	bs, _ := json.Marshal(g)
-	slog.Info("执行", slog.String("配置", string(bs)))
+	//bs, _ := json.Marshal(g)
+	//slog.Info("执行", slog.String("配置", string(bs)))
 	//inChan := make(chan interface{})
 	//outChan := make(chan string)
 	//metaChan := make(chan routineMetadata, c.Threads)

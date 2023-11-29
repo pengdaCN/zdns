@@ -1,9 +1,10 @@
 package puredns
 
 import (
+	"io"
+
 	log "github.com/sirupsen/logrus"
 	_ "github.com/zmap/zdns/pkg/zdns"
-	"io"
 )
 
 func init() {
