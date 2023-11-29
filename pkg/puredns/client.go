@@ -2,6 +2,7 @@ package puredns
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net"
 	"sync"
@@ -80,24 +81,24 @@ func NewClient(logger *slog.Logger, timeout time.Duration, parallelSize int) (*C
 		NameServers:      zdns.RootServers[:],
 		MaxDepth:         10,
 		CacheSize:        10000,
-		UDPOnly:          true,
-		LocalAddrs: []net.IP{
-			net.ParseIP("0.0.0.0"),
-		},
+		//UDPOnly:          true,
+		//LocalAddrs: []net.IP{
+		//	net.ParseIP("0.0.0.0"),
+		//},
 	}
 
 	// 发现本地一个可以发送数据的地址
 	// TODO 后续可以考虑使用 0.0.0.0 ip 替代
 	// Find local address for use in unbound UDP sockets
-	//{
-	//	conn, err := net.Dial("udp", "8.8.8.8:53")
-	//	if err != nil {
-	//		return nil, errors.Join(ErrUnreachableDns, err)
-	//	}
-	//
-	//	gc.LocalAddrs = append(gc.LocalAddrs, conn.LocalAddr().(*net.UDPAddr).IP)
-	//	_ = conn.Close()
-	//}
+	{
+		conn, err := net.Dial("udp", "8.8.8.8:53")
+		if err != nil {
+			return nil, errors.Join(ErrUnreachableDns, err)
+		}
+
+		gc.LocalAddrs = append(gc.LocalAddrs, conn.LocalAddr().(*net.UDPAddr).IP)
+		_ = conn.Close()
+	}
 
 	glf := new(miekg.GlobalLookupFactory)
 	_ = glf.Initialize(&gc)

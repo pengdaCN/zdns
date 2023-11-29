@@ -3,20 +3,13 @@ package puredns
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/zmap/dns"
 	"github.com/zmap/zdns/pkg/miekg"
 	"github.com/zmap/zdns/pkg/zdns"
 )
-
-func init() {
-	// 默认禁用日志输出
-	log.SetOutput(io.Discard)
-}
 
 func Lookup(dnsTy dns.Type, v string) error {
 	lookupFactory := zdns.GetLookup(dnsTy.String())

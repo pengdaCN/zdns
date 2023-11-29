@@ -17,7 +17,7 @@ package zdns
 import (
 	"encoding/csv"
 	"encoding/json"
-	"os"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -93,6 +93,76 @@ func makeName(name, prefix, nameOverride string) (string, bool) {
 	}
 }
 
+func doLookup2(g GlobalLookupFactory, gc *GlobalConf, input <-chan string, output chan<- any, wg *sync.WaitGroup, threadID int) error {
+	f, err := g.MakeRoutineFactory(threadID)
+	if err != nil {
+		log.Fatal("Unable to create new routine factory", err.Error())
+	}
+	var metadata routineMetadata
+	metadata.Status = make(map[Status]int)
+	for genericInput := range input {
+		var res Result
+		var innerRes any
+		//var trace []interface{}
+		var status Status
+		var err error
+		l, err := f.MakeLookup()
+		if err != nil {
+			log.Fatal("Unable to build lookup instance", err)
+		}
+		line := genericInput
+		var changed bool
+		var lookupName string
+		rawName := ""
+		nameServer := ""
+		var rank int
+		var entryMetadata string
+		if gc.AlexaFormat == true {
+			rawName, rank = parseAlexa(line)
+			res.AlexaRank = rank
+		} else if gc.MetadataFormat {
+			rawName, entryMetadata = parseMetadataInputLine(line)
+			res.Metadata = entryMetadata
+		} else if gc.NameServerMode {
+			nameServer = util.AddDefaultPortToDNSServerName(line)
+		} else {
+			rawName, nameServer = parseNormalInputLine(line)
+		}
+		lookupName, changed = makeName(rawName, gc.NamePrefix, gc.NameOverride)
+		if changed {
+			res.AlteredName = lookupName
+		}
+		res.Name = rawName
+		res.Class = dns.Class(gc.Class).String()
+		innerRes, _, status, err = l.DoLookup(lookupName, nameServer)
+		//res.Timestamp = time.Now().Format(gc.TimeFormat)
+		if status != STATUS_NO_OUTPUT {
+			res.Status = string(status)
+			res.Data = innerRes
+			//res.Trace = trace
+			if err != nil {
+				res.Error = err.Error()
+			}
+			//v, _ := version.NewVersion("0.0.0")
+			//o := &sheriff.Options{
+			//	Groups:     gc.OutputGroups,
+			//	ApiVersion: v,
+			//}
+			//data, err := sheriff.Marshal(o, res)
+			//jsonRes, err := json.Marshal(data)
+			//if err != nil {
+			//	log.Fatal("Unable to marshal JSON result", err)
+			//}
+			output <- res
+		}
+		//metadata.Names++
+		//metadata.Status[status]++
+	}
+	//metaChan <- metadata
+	wg.Done()
+	return nil
+}
+
 func doLookup(g GlobalLookupFactory, gc *GlobalConf, input <-chan interface{}, output chan<- string, metaChan chan<- routineMetadata, wg *sync.WaitGroup, threadID int) error {
 	f, err := g.MakeRoutineFactory(threadID)
 	if err != nil {
@@ -158,7 +228,7 @@ func doLookup(g GlobalLookupFactory, gc *GlobalConf, input <-chan interface{}, o
 		metadata.Names++
 		metadata.Status[status]++
 	}
-	metaChan <- metadata
+	//metaChan <- metadata
 	wg.Done()
 	return nil
 }
@@ -204,7 +274,7 @@ func DoLookups(g GlobalLookupFactory, c *GlobalConf) error {
 	// create pool of worker goroutines
 	var lookupWG sync.WaitGroup
 	lookupWG.Add(c.Threads)
-	startTime := time.Now().Format(c.TimeFormat)
+	//startTime := time.Now().Format(c.TimeFormat)
 	for i := 0; i < c.Threads; i++ {
 		go doLookup(g, c, inChan, outChan, metaChan, &lookupWG, i)
 	}
@@ -212,36 +282,111 @@ func DoLookups(g GlobalLookupFactory, c *GlobalConf) error {
 	close(outChan)
 	close(metaChan)
 	routineWG.Wait()
-	if c.MetadataFilePath != "" {
-		// we're done processing data. aggregate all the data from individual routines
-		metaData := aggregateMetadata(metaChan)
-		metaData.StartTime = startTime
-		metaData.EndTime = time.Now().Format(c.TimeFormat)
-		metaData.NameServers = c.NameServers
-		metaData.Retries = c.Retries
-		// Seconds() returns a float. However, timeout is passed in as an integer
-		// command line argument, so there should be no loss of data when casting
-		// back to an integer here.
-		metaData.Timeout = int(c.Timeout.Seconds())
-		metaData.Conf = c
-		// add global lookup-related metadata
-		// write out metadata
-		var f *os.File
-		if c.MetadataFilePath == "-" {
-			f = os.Stderr
-		} else {
-			var err error
-			f, err = os.OpenFile(c.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-			if err != nil {
-				log.Fatal("unable to open metadata file:", err.Error())
-			}
-			defer f.Close()
-		}
-		j, err := json.Marshal(metaData)
-		if err != nil {
-			log.Fatal("unable to JSON encode metadata:", err.Error())
-		}
-		f.WriteString(string(j))
+	//if c.MetadataFilePath != "" {
+	//	slog.Info("运行", slog.String("MetadataFilePath", c.MetadataFilePath))
+	//	// we're done processing data. aggregate all the data from individual routines
+	//	metaData := aggregateMetadata(metaChan)
+	//	metaData.StartTime = startTime
+	//	metaData.EndTime = time.Now().Format(c.TimeFormat)
+	//	metaData.NameServers = c.NameServers
+	//	metaData.Retries = c.Retries
+	//	// Seconds() returns a float. However, timeout is passed in as an integer
+	//	// command line argument, so there should be no loss of data when casting
+	//	// back to an integer here.
+	//	metaData.Timeout = int(c.Timeout.Seconds())
+	//	metaData.Conf = c
+	//	// add global lookup-related metadata
+	//	// write out metadata
+	//	var f *os.File
+	//	if c.MetadataFilePath == "-" {
+	//		f = os.Stderr
+	//	} else {
+	//		var err error
+	//		f, err = os.OpenFile(c.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	//		if err != nil {
+	//			log.Fatal("unable to open metadata file:", err.Error())
+	//		}
+	//		defer f.Close()
+	//	}
+	//	j, err := json.Marshal(metaData)
+	//	if err != nil {
+	//		log.Fatal("unable to JSON encode metadata:", err.Error())
+	//	}
+	//	f.WriteString(string(j))
+	//}
+	return nil
+}
+
+func DoLookups2(g GlobalLookupFactory, c *GlobalConf, inChan <-chan string, outChan chan<- any) error {
+	// DoLookup:
+	//	- n threads that do processing from in and place results in out
+	//	- process until inChan closes, then wg.done()
+	// Once we processing threads have all finished, wait until the
+	// output and metadata threads have completed
+	bs, _ := json.Marshal(g)
+	slog.Info("执行", slog.String("配置", string(bs)))
+	//inChan := make(chan interface{})
+	//outChan := make(chan string)
+	//metaChan := make(chan routineMetadata, c.Threads)
+	//var routineWG sync.WaitGroup
+
+	//inHandler := c.InputHandler
+	//if inHandler == nil {
+	//	log.Fatal("Input handler is nil")
+	//}
+	//
+	//outHandler := c.OutputHandler
+	//if outHandler == nil {
+	//	log.Fatal("Output handler is nil")
+	//}
+
+	// Use handlers to populate the input and output/results channel
+	//go inHandler.FeedChannel(inChan, &routineWG)
+	//go outHandler.WriteResults(outChan, &routineWG)
+	//routineWG.Add(2)
+
+	// create pool of worker goroutines
+	defer close(outChan)
+	var lookupWG sync.WaitGroup
+	lookupWG.Add(c.Threads)
+	//startTime := time.Now().Format(c.TimeFormat)
+	for i := 0; i < c.Threads; i++ {
+		go doLookup2(g, c, inChan, outChan, &lookupWG, i)
 	}
+	lookupWG.Wait()
+	//close(metaChan)
+	//routineWG.Wait()
+	//if c.MetadataFilePath != "" {
+	//	slog.Info("运行", slog.String("MetadataFilePath", c.MetadataFilePath))
+	//	// we're done processing data. aggregate all the data from individual routines
+	//	metaData := aggregateMetadata(metaChan)
+	//	metaData.StartTime = startTime
+	//	metaData.EndTime = time.Now().Format(c.TimeFormat)
+	//	metaData.NameServers = c.NameServers
+	//	metaData.Retries = c.Retries
+	//	// Seconds() returns a float. However, timeout is passed in as an integer
+	//	// command line argument, so there should be no loss of data when casting
+	//	// back to an integer here.
+	//	metaData.Timeout = int(c.Timeout.Seconds())
+	//	metaData.Conf = c
+	//	// add global lookup-related metadata
+	//	// write out metadata
+	//	var f *os.File
+	//	if c.MetadataFilePath == "-" {
+	//		f = os.Stderr
+	//	} else {
+	//		var err error
+	//		f, err = os.OpenFile(c.MetadataFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	//		if err != nil {
+	//			log.Fatal("unable to open metadata file:", err.Error())
+	//		}
+	//		defer f.Close()
+	//	}
+	//	j, err := json.Marshal(metaData)
+	//	if err != nil {
+	//		log.Fatal("unable to JSON encode metadata:", err.Error())
+	//	}
+	//	f.WriteString(string(j))
+	//}
 	return nil
 }
