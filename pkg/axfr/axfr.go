@@ -15,11 +15,11 @@
 package axfr
 
 import (
+	"errors"
 	"net"
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/zmap/dns"
@@ -177,7 +177,7 @@ func (s *GlobalLookupFactory) Initialize(c *zdns.GlobalConf) error {
 		}
 	}
 	if c.IterativeResolution {
-		log.Fatal("AXFR module does not support iterative resolution")
+		return errors.New("AXFR module does not support iterative resolution")
 	}
 	return nil
 }

@@ -20,6 +20,6 @@ find -iname '*.go' -exec sed -i 's@npd/pkg/xzdns/pkg/@npd/pkg/xzdns/@' {} \;
 cd ..
 dst=~/pro_code/npd/pkg/xzdns
 mkdir -p $dst
-cp $dir/pkg $dir/internal $dir/cachehash $dir/iohandlers $dst -r
+cp $dir/pkg/* $dir/internal $dir/cachehash $dir/iohandlers $dst -r
 
 rm $dir -rf

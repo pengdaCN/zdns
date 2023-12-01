@@ -15,13 +15,13 @@
 package zdns
 
 import (
+	"errors"
 	"math/rand"
 	"net"
 	"sort"
 	"strings"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -56,8 +56,7 @@ type BaseLookup struct {
 }
 
 func (base *BaseLookup) DoLookup(name string, class uint16) (interface{}, Status, error) {
-	log.Fatal("Unimplemented DoLookup")
-	return nil, STATUS_ERROR, nil
+	return nil, STATUS_ERROR, errors.New("Unimplemented DoLookup")
 }
 
 // one RoutineLookupFactory per goroutine =====================================
@@ -120,22 +119,22 @@ func (s *BaseGlobalLookupFactory) Help() string {
 
 func (f *BaseGlobalLookupFactory) RandomNameServer() string {
 	if f.GlobalConf == nil {
-		log.Fatal("no global conf initialized")
+		panic("no global conf initialized")
 	}
 	l := len(f.GlobalConf.NameServers)
 	if l == 0 {
-		log.Fatal("No name servers specified")
+		panic("No name servers specified")
 	}
 	return f.GlobalConf.NameServers[rand.Intn(l)]
 }
 
 func (f *BaseGlobalLookupFactory) RandomLocalAddr() net.IP {
 	if f.GlobalConf == nil {
-		log.Fatal("no global conf initialized")
+		panic("no global conf initialized")
 	}
 	l := len(f.GlobalConf.LocalAddrs)
 	if l == 0 {
-		log.Fatal("No local addresses specified")
+		panic("No local addresses specified")
 	}
 	return f.GlobalConf.LocalAddrs[rand.Intn(l)]
 }

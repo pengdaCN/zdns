@@ -18,8 +18,6 @@ import (
 	"bufio"
 	"io"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type StreamInputHandler struct {
@@ -41,7 +39,7 @@ func (h *StreamInputHandler) FeedChannel(in chan<- interface{}, wg *sync.WaitGro
 		in <- s.Text()
 	}
 	if err := s.Err(); err != nil {
-		log.Fatalf("unable to read input stream: %v", err)
+		return err
 	}
 	return nil
 }

@@ -18,8 +18,6 @@ import (
 	"bufio"
 	"os"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type FileInputHandler struct {
@@ -43,7 +41,7 @@ func (h *FileInputHandler) FeedChannel(in chan<- interface{}, wg *sync.WaitGroup
 		var err error
 		f, err = os.Open(h.filepath)
 		if err != nil {
-			log.Fatalf("unable to open input file: %v", err)
+			return err
 		}
 	}
 	s := bufio.NewScanner(f)
@@ -51,7 +49,7 @@ func (h *FileInputHandler) FeedChannel(in chan<- interface{}, wg *sync.WaitGroup
 		in <- s.Text()
 	}
 	if err := s.Err(); err != nil {
-		log.Fatalf("input unable to read file: %v", err)
+		return err
 	}
 	return nil
 }
@@ -76,7 +74,7 @@ func (h *FileOutputHandler) WriteResults(results <-chan string, wg *sync.WaitGro
 		var err error
 		f, err = os.OpenFile(h.filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
-			log.Fatalf("unable to open output file: %v", err)
+			return err
 		}
 		defer f.Close()
 	}

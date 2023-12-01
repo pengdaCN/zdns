@@ -22,11 +22,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func ulimitCheck(maxOpenFiles uint64) {
+func ulimitCheck(maxOpenFiles uint64) error {
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
-		log.Fatal("Failed to fetch ulimit ", err)
+		return err
 	}
 
 	if maxOpenFiles > rLimit.Cur {
@@ -36,8 +36,10 @@ func ulimitCheck(maxOpenFiles uint64) {
 		rLimit.Cur = maxOpenFiles
 		err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 		if err != nil {
-			log.Fatal("Error setting nofile limit to ", rLimit.Cur, ": ", err)
+			return err
 		}
 		log.Info("Updated nofile limit to ", rLimit.Cur)
 	}
+
+	return nil
 }

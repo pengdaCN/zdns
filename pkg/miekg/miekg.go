@@ -226,11 +226,11 @@ func (s *RoutineLookupFactory) Initialize(c *zdns.GlobalConf) {
 		if c.RecycleSockets {
 			// create PacketConn for use throughout thread's life
 			conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: s.LocalAddr})
-			if err != nil {
-				log.Fatal("unable to create socket", err)
+			if err == nil {
+				//log.Fatal("unable to create socket", err)
+				s.Conn = new(dns.Conn)
+				s.Conn.Conn = conn
 			}
-			s.Conn = new(dns.Conn)
-			s.Conn.Conn = conn
 		}
 	}
 	if !c.UDPOnly {
