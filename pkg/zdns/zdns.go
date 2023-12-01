@@ -279,10 +279,12 @@ func Run(gc GlobalConf, flags *pflag.FlagSet,
 func Run2(gc GlobalConf, in <-chan string, out chan<- any) error {
 	factory := GetLookup(gc.Module)
 	if factory == nil {
+		close(out)
 		return fmt.Errorf("invalid lookup module specified. Valid modules: %s", ValidlookupsString())
 	}
 
 	if len(gc.LocalAddrs) == 0 {
+		close(out)
 		return errors.New("local address is empty")
 	}
 
@@ -291,6 +293,7 @@ func Run2(gc GlobalConf, in <-chan string, out chan<- any) error {
 
 	// allow the factory to initialize itself
 	if err := factory.Initialize(&gc); err != nil {
+		close(out)
 		return err
 	}
 

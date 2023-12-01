@@ -74,10 +74,15 @@ func (c *ZClient) Lookups(ctx context.Context, resolveTy dns.Type, arr []string)
 	execGc := c.gc
 	execGc.Module = resolveTy.String()
 
-	go zdns.Run2(execGc, in, out)
+	var logger = c.getLockupLogger(ctx)
+	go func() {
+		if err := zdns.Run2(execGc, in, out); err != nil {
+			logger.Error("执行dns查询错误", slog.String("err", err.Error()))
+			return
+		}
+	}()
 
 	var rr []LookupResult
-	var logger = c.getLockupLogger(ctx)
 	for r := range out {
 		zdnsResult := r.(zdns.Result)
 		res := zdnsResult.Data
