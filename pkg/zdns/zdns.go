@@ -15,6 +15,7 @@
 package zdns
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -276,11 +277,13 @@ func Run(gc GlobalConf, flags *pflag.FlagSet,
 }
 
 func Run2(gc GlobalConf, in <-chan string, out chan<- any) error {
-
 	factory := GetLookup(gc.Module)
-
 	if factory == nil {
 		return fmt.Errorf("invalid lookup module specified. Valid modules: %s", ValidlookupsString())
+	}
+
+	if len(gc.LocalAddrs) == 0 {
+		return errors.New("local address is empty")
 	}
 
 	gc.Class = dns.ClassINET
